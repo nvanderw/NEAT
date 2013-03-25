@@ -1,5 +1,6 @@
 module NEAT.Express where
 
+import Control.Monad
 import Data.Maybe
 
 import qualified NEAT.Gene as Gene
@@ -44,3 +45,11 @@ expressConnGene (Gene.ConnectGene inID outID weight True _) organism = do
 
     modifySTRef (getNeurConnections inNeuron) $
         Set.insert (Connection outNeuron weight)
+
+expressGenome :: Gene.Genome -> Organism s -> ST s (Organism s)
+expressGenome (Gene.Genome nodeGenes connGenes) org = do
+    -- |Express all of our node genes
+    org' <- foldM (flip expressNodeGene) org nodeGenes
+    -- |Express all connection genes
+    mapM_ (`expressConnGene` org') connGenes
+    return org'
