@@ -3,7 +3,7 @@ module NEAT.Express where
 import Control.Monad
 import Data.Maybe
 
-import qualified NEAT.Gene as Gene
+import NEAT.Gene
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
@@ -30,24 +30,24 @@ type Organism s = Map.Map Integer (Neuron s)
 
 -- |Express a node gene by creating a neuron and adding it to a map from
 -- identifiers to neurons
-expressNodeGene :: Gene.NodeGene -> Organism s -> ST s (Organism s)
+expressNodeGene :: NodeGene -> Organism s -> ST s (Organism s)
 expressNodeGene gene organism = do
     connections <- newSTRef Set.empty
-    let id = Gene.getNodeID gene
+    let id = ngID gene
     let neuron = Neuron id connections
     return $ Map.insert id neuron organism
 
-expressConnGene :: Gene.ConnectGene -> Organism s -> ST s ()
-expressConnGene (Gene.ConnectGene _ _ _ False _) _ = return ()
-expressConnGene (Gene.ConnectGene inID outID weight True _) organism = do
+expressConnGene :: ConnectGene -> Organism s -> ST s ()
+expressConnGene (ConnectGene _ _ _ False _) _ = return ()
+expressConnGene (ConnectGene inID outID weight True _) organism = do
     let inNeuron = fromJust . Map.lookup inID $ organism
     let outNeuron = fromJust . Map.lookup outID $ organism
 
     modifySTRef (getNeurConnections inNeuron) $
         Set.insert (Connection outNeuron weight)
 
-expressGenome :: Gene.Genome -> Organism s -> ST s (Organism s)
-expressGenome (Gene.Genome nodeGenes connGenes) org = do
+expressGenome :: Genome -> Organism s -> ST s (Organism s)
+expressGenome (Genome nodeGenes connGenes) org = do
     -- |Express all of our node genes
     org' <- foldM (flip expressNodeGene) org nodeGenes
     -- |Express all connection genes

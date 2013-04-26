@@ -3,23 +3,23 @@ module NEAT.Gene (NodeGene(..),
                   Genome(..)) where
 
 data NodeGene = NodeGene {
-    getNodeID :: Integer
+    ngID :: Integer
 }
 
 data ConnectGene = ConnectGene {
     -- |ID of first connected node
-    getConnInID :: Integer,
+    cgInID :: Integer,
     -- |ID of second connected node
-    getConnOutID :: Integer,
+    cgOutID :: Integer,
     -- |Weight of connection between nodes
-    getConnWeight :: Double,
+    cgWeight :: Double,
     -- |Is this connection enabled?
-    getConnEnabled :: Bool,
+    cgEnabled :: Bool,
     -- |Globally-incremented "innovation number"
-    getInnov :: Integer
+    cgInnov :: Integer
 }
  
 data Genome = Genome {
-    getGenomeNodes :: [NodeGene],
-    getGenomeConns :: [ConnectGene]
+    gmNodes :: [NodeGene],
+    gmConns :: [ConnectGene]
 }

@@ -12,7 +12,7 @@ import Data.Random.Normal (normal)
 
 import System.Random
 
-import qualified NEAT.Gene as Gene
+import NEAT.Gene
  
 -- |State of the simulation in state thread s with random generator g
 data SimState s g = SimState {
@@ -44,18 +44,18 @@ getNormal = do
     return rnd
     
 -- |Given a connection gene, randomly mutate its weight
-mutateConnGeneWeight :: RandomGen g => Gene.ConnectGene ->
-                                      Simulation s g Gene.ConnectGene
+mutateConnGeneWeight :: RandomGen g => ConnectGene ->
+                                       Simulation s g ConnectGene
 mutateConnGeneWeight gene = do
     (rnd :: Double) <- getRandom
     gene' <- if rnd < 0.1
               then do
                 (weight :: Double) <- getRandom
-                return $ gene { Gene.getConnWeight = weight }
+                return $ gene { cgWeight = weight }
               else do
                 (delta :: Double) <- getNormal
-                let weight = Gene.getConnWeight gene
+                let weight = cgWeight gene
                 let weight' = weight + delta
-                return $ gene { Gene.getConnWeight = weight' }
+                return $ gene { cgWeight = weight' }
 
     return gene'
