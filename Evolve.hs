@@ -28,7 +28,7 @@ getRandom :: forall s g a. (Random a, RandomGen g) => Simulation s g a
 getRandom = do
     stref <- ask
     state <- lift . readSTRef $ stref
-    let (rnd :: a, gen :: g) = random gen
+    let (rnd :: a, gen :: g) = random $ simRandGen state
 
     lift $ writeSTRef stref $ state { simRandGen = gen }
     return rnd
@@ -38,7 +38,7 @@ getNormal :: forall s g a. (Floating a, Random a, RandomGen g) => Simulation s g
 getNormal = do
     stref <- ask
     state <- lift . readSTRef $ stref
-    let (rnd :: a, gen :: g) = normal gen
+    let (rnd :: a, gen :: g) = normal $ simRandGen state
 
     lift $ writeSTRef stref $ state { simRandGen = gen }
     return rnd
@@ -50,7 +50,7 @@ mutateConnGeneWeight gene = do
     (rnd :: Double) <- getRandom
     gene' <- if rnd < 0.1
               then do
-                (weight :: Double) <- getRandom
+                (weight :: Double) <- liftM ((-) 1 . (* 2)) getRandom
                 return $ gene { cgWeight = weight }
               else do
                 (delta :: Double) <- getNormal
