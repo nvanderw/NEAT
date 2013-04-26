@@ -59,3 +59,27 @@ mutateConnGeneWeight gene = do
                 return $ gene { cgWeight = weight' }
 
     return gene'
+
+addNode = error "unimp: addNode"
+addConn = error "unimp: addConn"
+
+mutateGenome :: RandomGen g => Genome -> Simulation s g Genome
+mutateGenome genome = do
+    -- I should consider refactoring this part
+    (rnd :: Double) <- getRandom
+    genome' <- if rnd < 0.1
+                then addNode genome
+                else return genome
+
+    (rnd :: Double) <- getRandom
+    genome'' <- if rnd < 0.1
+                  then addConn genome'
+                  else return genome'
+    
+    (rnd :: Double) <- getRandom
+    if rnd < 0.9
+      then do
+        let conns = gmConns genome''
+        conns' <- mapM mutateConnGeneWeight conns
+        return $ genome'' { gmConns = conns' }
+      else return genome''

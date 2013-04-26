@@ -78,7 +78,6 @@ testMutateGene = TestCase $ do
     
     let weight = cgWeight gene'
 
-    print weight
     -- This is probabilistic but should hold for at least 99.9937% of cases
     assertBool "Mutated connection weight outside expected range" $
       (-4 < weight) && (weight < 4)
