@@ -1,7 +1,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module NEAT.Evolve where
 
-import Control.Arrow ((>>>))
+import Control.Arrow ((>>>), Kleisli(..))
 import Control.Monad (liftM)
 import Control.Monad.Trans
 import Control.Monad.Trans.Reader
@@ -60,26 +60,33 @@ mutateConnGeneWeight gene = do
 
     return gene'
 
-addNode = error "unimp: addNode"
-addConn = error "unimp: addConn"
+-- Possible mutations 
+mutAddNode :: RandomGen g => Genome -> Simulation s g Genome
+mutAddNode = error "unimp: mutAddNode"
 
+mutAddConn :: RandomGen g => Genome -> Simulation s g Genome
+mutAddConn = error "unimp: mutAddConn"
+
+mutTweakWeights :: RandomGen g => Genome -> Simulation s g Genome
+mutTweakWeights genome = do
+    conns' <- mapM mutateConnGeneWeight . gmConns $ genome
+    return $ genome { gmConns = conns' }
+
+-- |Helper function to run some kind of mutation (endomorphism) with
+-- a given probability in the simulation monad.
+perturbWithProb :: RandomGen g => Double -> (a -> Simulation s g a) -> a -> Simulation s g a
+perturbWithProb prob f x = do
+    (rnd :: Double) <- getRandom
+    if rnd < prob
+      then f x
+      else return x
+
+
+-- |Run a sequence of mutations of various probabilities on a genome
 mutateGenome :: RandomGen g => Genome -> Simulation s g Genome
-mutateGenome genome = do
-    -- I should consider refactoring this part
-    (rnd :: Double) <- getRandom
-    genome' <- if rnd < 0.1
-                then addNode genome
-                else return genome
-
-    (rnd :: Double) <- getRandom
-    genome'' <- if rnd < 0.1
-                  then addConn genome'
-                  else return genome'
-    
-    (rnd :: Double) <- getRandom
-    if rnd < 0.9
-      then do
-        let conns = gmConns genome''
-        conns' <- mapM mutateConnGeneWeight conns
-        return $ genome'' { gmConns = conns' }
-      else return genome''
+mutateGenome = runKleisli $
+  -- In the Kleisli category (a -> Simulation s g b), chain together
+  -- all of the probabilistic mutations
+  Kleisli (perturbWithProb 0.1 mutAddNode) >>>
+  Kleisli (perturbWithProb 0.1 mutAddConn) >>>
+  Kleisli (perturbWithProb 0.9 mutTweakWeights)
