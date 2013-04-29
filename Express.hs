@@ -16,13 +16,13 @@ data Connection s = Connection (Neuron s) Double
 
 instance Ord (Connection s) where
     compare (Connection n1 _) (Connection n2 _) =
-        compare (getNeurID n1) (getNeurID n2)
+        compare (neurID n1) (neurID n2)
 
 -- |Type of a neuron in a state thread s
 data Neuron s = Neuron {
-    getNeurID :: Integer,
+    neurID :: Integer,
     -- |Mutable list of connections to forward neurons
-    getNeurConnections :: STRef s (Set.Set (Connection s))
+    neurConns :: STRef s (Set.Set (Connection s))
 } deriving (Eq)
 
 -- |Mapping from IDs to neurons
@@ -43,7 +43,7 @@ expressConnGene (ConnectGene inID outID weight True _) organism = do
     let inNeuron = fromJust . Map.lookup inID $ organism
     let outNeuron = fromJust . Map.lookup outID $ organism
 
-    modifySTRef (getNeurConnections inNeuron) $
+    modifySTRef (neurConns inNeuron) $
         Set.insert (Connection outNeuron weight)
 
 expressGenome :: Genome -> Organism s -> ST s (Organism s)

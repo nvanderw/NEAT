@@ -20,7 +20,7 @@ import NEAT.Evolve
 testSimpleExpress = TestCase $ do
     org <- stToIO $ expressNodeGene (NodeGene 0) Map.empty
     let (Just neuron) = Map.lookup 0 org
-    assertEqual "Error in node gene expression" 0 (getNeurID neuron)
+    assertEqual "Error in node gene expression" 0 (neurID neuron)
     
     org' <- stToIO $ expressNodeGene (NodeGene 1) org
     let org = org'
@@ -29,13 +29,13 @@ testSimpleExpress = TestCase $ do
     let connGene = ConnectGene 0 1 1.5 False 0
     stToIO $ expressConnGene connGene org
 
-    conns <- Map.lookup 0 >>> fromJust >>> getNeurConnections >>>
+    conns <- Map.lookup 0 >>> fromJust >>> neurConns >>>
              readSTRef >>> stToIO $ org
     assertEqual "Error in expressing disabled connection" 0 $ Set.size conns
 
     -- |Now express the same gene when it's enabled
     stToIO $ expressConnGene (connGene { cgEnabled = True }) org
-    conns <- Map.lookup 0 >>> fromJust >>> getNeurConnections >>>
+    conns <- Map.lookup 0 >>> fromJust >>> neurConns >>>
             readSTRef >>> stToIO $ org
     assertEqual "Did not express enabled connection" 1 $ Set.size conns
 
@@ -53,7 +53,7 @@ testExpressGenome = TestCase $ do
 
     -- Test that all neurons have 5 connections
     forM_ (Map.assocs org) $ \(id, neuron) -> do
-        conns <- stToIO $ readSTRef $ getNeurConnections neuron
+        conns <- stToIO $ readSTRef $ neurConns neuron
         let message = "Neuron " ++ show id ++ " has wrong number of connections"
         assertEqual message 5 $ Set.size conns
 
