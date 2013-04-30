@@ -18,15 +18,32 @@ import NEAT.Evolve
 
 -- |Tests that a gene is expressed correctly
 testSimpleExpress = TestCase $ do
-    org <- stToIO $ expressNodeGene (NodeGene 0) Map.empty
+    let ng0 = NodeGene {
+      ngID   = 0,
+      ngType = NodeIn
+    } 
+
+    org <- stToIO $ expressNodeGene ng0 Map.empty
     let (Just neuron) = Map.lookup 0 org
     assertEqual "Error in node gene expression" 0 (neurID neuron)
     
-    org' <- stToIO $ expressNodeGene (NodeGene 1) org
+    let ng1 = NodeGene {
+      ngID   = 1,
+      ngType = NodeOut
+    }
+
+    org' <- stToIO $ expressNodeGene ng1 org
     let org = org'
 
     -- |Express an inactive connection and check that it doesn't exist
-    let connGene = ConnectGene 0 1 1.5 False 0
+    let connGene = ConnectGene {
+      cgInID    = 0,
+      cgOutID   = 1,
+      cgWeight  = 1.5,
+      cgEnabled = False,
+      cgInnov   = 0
+    }
+
     stToIO $ expressConnGene connGene org
 
     conns <- Map.lookup 0 >>> fromJust >>> neurConns >>>
@@ -41,12 +58,24 @@ testSimpleExpress = TestCase $ do
 
 -- |Build up a small genome and try to express it
 testExpressGenome = TestCase $ do
-    let nodeGenes = map NodeGene [0..4]
-    let connGenes = nodeGenes >>=
-                      \(NodeGene m) ->
-                        nodeGenes >>=
-                          \(NodeGene n) ->
-                            return (ConnectGene m n 1.0 True (m * 5 + n))
+    let nodeIDs = [0..4]
+    let nodeGenes = flip map nodeIDs $ \nid -> NodeGene {
+      ngID = nid,
+      ngType = NodeIn
+    }
+
+    -- Connect all nodeIDs to all others
+    let connGenes = nodeIDs >>=
+                      \m ->
+                        nodeIDs >>=
+                          \n ->
+                            return $ ConnectGene {
+                              cgInID = m,
+                              cgOutID = n,
+                              cgWeight = 1.0,
+                              cgEnabled = True,
+                              cgInnov = m * 5 + n
+                            }
 
     -- Express the organism
     org <- stToIO $ expressGenome (Genome nodeGenes connGenes) Map.empty

@@ -1,9 +1,15 @@
 module NEAT.Gene (NodeGene(..), 
+                  NodeType(..),
                   ConnectGene(..),
                   Genome(..)) where
 
+-- |A node can be input, output, or a hidden node that applies some
+-- transformation to the sum of its inputs
+data NodeType = NodeIn | NodeOut | NodeHid (Double -> Double)
+
 data NodeGene = NodeGene {
-    ngID :: Integer
+    ngID :: Integer,
+    ngType :: NodeType
 }
 
 data ConnectGene = ConnectGene {

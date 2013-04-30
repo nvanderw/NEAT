@@ -22,7 +22,10 @@ instance Ord (Connection s) where
 data Neuron s = Neuron {
     neurID :: Integer,
     -- |Mutable list of connections to forward neurons
-    neurConns :: STRef s (Set.Set (Connection s))
+    neurConns :: STRef s (Set.Set (Connection s)),
+
+    neurState :: STRef s Int, -- |Current output level
+    neurNextState :: STRef s Int -- |Output level at next iteration
 } deriving (Eq)
 
 -- |Mapping from IDs to neurons
@@ -33,8 +36,16 @@ type Organism s = Map.Map Integer (Neuron s)
 expressNodeGene :: NodeGene -> Organism s -> ST s (Organism s)
 expressNodeGene gene organism = do
     connections <- newSTRef Set.empty
+    state       <- newSTRef 0
+    next_state  <- newSTRef 0
+
     let id = ngID gene
-    let neuron = Neuron id connections
+    let neuron = Neuron {
+      neurID        = id,
+      neurConns     = connections,
+      neurState     = state,
+      neurNextState = next_state
+    }
     return $ Map.insert id neuron organism
 
 expressConnGene :: ConnectGene -> Organism s -> ST s ()
