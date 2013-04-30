@@ -24,8 +24,8 @@ data Neuron s = Neuron {
     -- |Mutable list of connections to forward neurons
     neurConns :: STRef s (Set.Set (Connection s)),
 
-    neurState :: STRef s Int, -- |Current output level
-    neurNextState :: STRef s Int -- |Output level at next iteration
+    neurInput :: STRef s Double, -- |Input level
+    neurOutput :: STRef s Double -- |Output level
 } deriving (Eq)
 
 -- |Mapping from IDs to neurons
@@ -36,15 +36,15 @@ type Organism s = Map.Map Integer (Neuron s)
 expressNodeGene :: NodeGene -> Organism s -> ST s (Organism s)
 expressNodeGene gene organism = do
     connections <- newSTRef Set.empty
-    state       <- newSTRef 0
-    next_state  <- newSTRef 0
+    init_input  <- newSTRef 0
+    init_output <- newSTRef 0
 
     let id = ngID gene
     let neuron = Neuron {
-      neurID        = id,
-      neurConns     = connections,
-      neurState     = state,
-      neurNextState = next_state
+      neurID     = id,
+      neurConns  = connections,
+      neurInput  = init_input,
+      neurOutput = init_output
     }
     return $ Map.insert id neuron organism
 
@@ -64,3 +64,6 @@ expressGenome (Genome nodeGenes connGenes) org = do
     -- |Express all connection genes
     mapM_ (`expressConnGene` org') connGenes
     return org'
+
+stepOrganism :: Organism s -> [Double] -> ST s [Double]
+stepOrganism org = error "unimp: stepOrganism"
