@@ -21,12 +21,18 @@ instance Ord (Connection s) where
 -- |Type of a neuron in a state thread s
 data Neuron s = Neuron {
     neurID :: Integer,
+    neurType :: NodeType,
+    neurTransfer :: Double -> Double,
+
     -- |Mutable list of connections to forward neurons
     neurConns :: STRef s (Set.Set (Connection s)),
 
     neurInput :: STRef s Double, -- |Input level
     neurOutput :: STRef s Double -- |Output level
-} deriving (Eq)
+}
+
+instance Eq (Neuron s) where
+    n1 == n2 = (neurID n1) == (neurID n2)
 
 -- |Mapping from IDs to neurons
 type Organism s = Map.Map Integer (Neuron s)
@@ -39,14 +45,17 @@ expressNodeGene gene organism = do
     init_input  <- newSTRef 0
     init_output <- newSTRef 0
 
-    let id = ngID gene
+    let nid = ngID gene
+
     let neuron = Neuron {
-      neurID     = id,
-      neurConns  = connections,
-      neurInput  = init_input,
-      neurOutput = init_output
+      neurID       = nid,
+      neurType     = ngType gene,
+      neurTransfer = ngTransfer gene,
+      neurConns    = connections,
+      neurInput    = init_input,
+      neurOutput   = init_output
     }
-    return $ Map.insert id neuron organism
+    return $ Map.insert nid neuron organism
 
 expressConnGene :: ConnectGene -> Organism s -> ST s ()
 expressConnGene (ConnectGene _ _ _ False _) _ = return ()

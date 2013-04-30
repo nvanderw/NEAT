@@ -5,10 +5,11 @@ module NEAT.Gene (NodeGene(..),
 
 -- |A node can be input, output, or a hidden node that applies some
 -- transformation to the sum of its inputs
-data NodeType = NodeIn | NodeOut | NodeHid (Double -> Double)
+data NodeType = NodeIn | NodeOut | NodeHid deriving (Read, Show, Eq, Ord)
 
 data NodeGene = NodeGene {
     ngID :: Integer,
+    ngTransfer :: Double -> Double,
     ngType :: NodeType
 }
 
