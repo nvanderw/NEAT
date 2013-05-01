@@ -7,6 +7,7 @@ import Control.Monad.Trans.Reader
 import Control.Arrow ((>>>))
 import Data.Maybe (fromJust)
 import Data.STRef (readSTRef, newSTRef)
+import Data.List (genericReplicate)
 import System.Random (getStdGen)
 
 import qualified Data.Map as Map
@@ -141,10 +142,50 @@ testStepSimpleOrganism = TestCase $ do
         organism <- expressGenome genome emptyOrganism
         sequence . replicate 3 $ stepOrganism organism [1.0]
 
-    assertEqual "Values not propagating in network as expected" outputs
+    assertEqual "Values not propagating in small network as expected" outputs
       [[0], [0], [1]]
+
+testStepBigOrganism = TestCase $ do
+    let numnodes = 500
+
+    let ngIn = NodeGene {
+      ngID       = 0,
+      ngTransfer = id,
+      ngType     = NodeIn
+    }
+
+    let ngOut = NodeGene {
+      ngID       = numnodes - 1,
+      ngTransfer = id,
+      ngType     = NodeOut
+    }
+
+    let ngHiddens = flip map [1..numnodes - 2] $ \n -> NodeGene {
+          ngID = n,
+          ngTransfer = id,
+          ngType = NodeHid
+    }
+
+    let ngs = ngIn : ngHiddens ++ [ngOut]
+    let cgs = flip map [0..numnodes - 2] $ \n -> ConnectGene {
+          cgInID    = n,
+          cgOutID   = n + 1,
+          cgWeight  = 1.0,
+          cgEnabled = True,
+          cgInnov   = n
+    }
+
+    let genome = Genome ngs cgs
+    
+    let outputs = runST $ do
+        organism <- expressGenome genome emptyOrganism
+        sequence . genericReplicate (numnodes + 1) $ stepOrganism organism [1.0]
+
+    assertEqual "Values not propagating in large network as expected" outputs
+      $ genericReplicate numnodes [0.0] ++ [[1.0]]
 
 testMain = runTestTT $ TestList [testSimpleExpress,
                                  testExpressGenome,
                                  testMutateGene,
-                                 testStepSimpleOrganism]
+                                 testStepSimpleOrganism,
+                                 testStepBigOrganism]
