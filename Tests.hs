@@ -161,18 +161,18 @@ testStepBigOrganism = TestCase $ do
     }
 
     let ngHiddens = flip map [1..numnodes - 2] $ \n -> NodeGene {
-          ngID = n,
-          ngTransfer = id,
-          ngType = NodeHid
+      ngID = n,
+      ngTransfer = id,
+      ngType = NodeHid
     }
 
     let ngs = ngIn : ngHiddens ++ [ngOut]
     let cgs = flip map [0..numnodes - 2] $ \n -> ConnectGene {
-          cgInID    = n,
-          cgOutID   = n + 1,
-          cgWeight  = 1.0,
-          cgEnabled = True,
-          cgInnov   = n
+      cgInID    = n,
+      cgOutID   = n + 1,
+      cgWeight  = 1.0,
+      cgEnabled = True,
+      cgInnov   = n
     }
 
     let genome = Genome ngs cgs
