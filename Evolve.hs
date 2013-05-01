@@ -16,7 +16,11 @@ import NEAT.Gene
  
 -- |State of the simulation in state thread s with random generator g
 data SimState s g = SimState {
-                      simRandGen :: g
+                      -- Random number state
+                      simRandGen :: g,
+                      -- Transfer function of hidden nodes that we add
+                      -- during evolution
+                      simHidTransfer :: Double -> Double
                     }
 
 -- |Simulation monad, which is just a Reader with the simulation state,
@@ -29,6 +33,16 @@ getRandom = do
     stref <- ask
     state <- lift . readSTRef $ stref
     let (rnd :: a, gen :: g) = random $ simRandGen state
+
+    lift $ writeSTRef stref $ state { simRandGen = gen }
+    return rnd
+
+-- |Equivalent of randomR within (Simulation s g) monad
+getRandomR :: forall s g a. (Random a, RandomGen g) => (a, a) -> Simulation s g a
+getRandomR range = do
+    stref <- ask
+    state <- lift . readSTRef $ stref
+    let (rnd :: a, gen :: g) = randomR range $ simRandGen state
 
     lift $ writeSTRef stref $ state { simRandGen = gen }
     return rnd
@@ -62,7 +76,20 @@ mutateConnGeneWeight gene = do
 
 -- Possible mutations 
 mutAddNode :: RandomGen g => Genome -> Simulation s g Genome
-mutAddNode = error "unimp: mutAddNode"
+mutAddNode (Genome nodes conns) = do
+    transfer <- liftM simHidTransfer $ ask >>= (lift . readSTRef)
+    -- Add a new node to the genome
+    let newID = (ngID $ last nodes) + 1
+    let newNg = NodeGene {
+      ngID = newID,
+      ngTransfer = transfer,
+      ngType = NodeHid
+    }
+    
+    -- Choose a random connection to split by picking a random index in the
+    -- genome.
+    rnd_ix <- getRandomR (0, length conns - 1)
+    error "unimp: mutAddNode"
 
 mutAddConn :: RandomGen g => Genome -> Simulation s g Genome
 mutAddConn = error "unimp: mutAddConn"

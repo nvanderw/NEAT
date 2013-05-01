@@ -102,7 +102,10 @@ testMutateGene = TestCase $ do
     -- Set up a simulation state. We have to do some types wrangling for
     -- this.
     gen <- getStdGen
-    let state = SimState { simRandGen = gen }
+    let state = SimState {
+      simRandGen = gen,
+      simHidTransfer = \n -> if n < 0 then 0 else 1
+    }
 
     let gene' = runST $ do
         -- Create a mutable reference for the state
