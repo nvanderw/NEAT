@@ -19,8 +19,9 @@ import NEAT.Evolve
 -- |Tests that a gene is expressed correctly
 testSimpleExpress = TestCase $ do
     let ng0 = NodeGene {
-      ngID   = 0,
-      ngType = NodeIn
+      ngID       = 0,
+      ngType     = NodeIn,
+      ngTransfer = id
     } 
 
     org <- stToIO $ expressNodeGene ng0 Map.empty
@@ -28,8 +29,9 @@ testSimpleExpress = TestCase $ do
     assertEqual "Error in node gene expression" 0 (neurID neuron)
     
     let ng1 = NodeGene {
-      ngID   = 1,
-      ngType = NodeOut
+      ngID       = 1,
+      ngType     = NodeOut,
+      ngTransfer = id
     }
 
     org' <- stToIO $ expressNodeGene ng1 org
@@ -60,8 +62,9 @@ testSimpleExpress = TestCase $ do
 testExpressGenome = TestCase $ do
     let nodeIDs = [0..4]
     let nodeGenes = flip map nodeIDs $ \nid -> NodeGene {
-      ngID = nid,
-      ngType = NodeIn
+      ngID       = nid,
+      ngType     = NodeIn,
+      ngTransfer = id
     }
 
     -- Connect all nodeIDs to all others
@@ -111,6 +114,37 @@ testMutateGene = TestCase $ do
     assertBool "Mutated connection weight outside expected range" $
       (-4 < weight) && (weight < 4)
 
+testStepSimpleOrganism = TestCase $ do
+    let ngIn = NodeGene {
+      ngID       = 0,
+      ngTransfer = id,
+      ngType     = NodeIn
+    }
 
-testMain = runTestTT $ TestList [testSimpleExpress, testExpressGenome,
-                                 testMutateGene]
+    let ngOut = NodeGene {
+      ngID       = 1,
+      ngTransfer = id,
+      ngType     = NodeOut
+    }
+
+    let cg = ConnectGene {
+      cgInID    = 0,
+      cgOutID   = 1,
+      cgWeight  = 1.0,
+      cgEnabled = True,
+      cgInnov   = 0
+    }
+
+    let genome = Genome [ngIn, ngOut] [cg]
+
+    let outputs = runST $ do
+        organism <- expressGenome genome emptyOrganism
+        sequence . replicate 3 $ stepOrganism organism [1.0]
+
+    assertEqual "Values not propagating in network as expected" outputs
+      [[0], [0], [1]]
+
+testMain = runTestTT $ TestList [testSimpleExpress,
+                                 testExpressGenome,
+                                 testMutateGene,
+                                 testStepSimpleOrganism]

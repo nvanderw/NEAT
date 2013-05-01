@@ -42,6 +42,9 @@ instance Ord (Neuron s) where
 -- |Mapping from IDs to neurons
 type Organism s = Map.Map Integer (Neuron s)
 
+emptyOrganism :: Organism s
+emptyOrganism = Map.empty
+
 -- |Express a node gene by creating a neuron and adding it to a map from
 -- identifiers to neurons
 expressNodeGene :: NodeGene -> Organism s -> ST s (Organism s)
